@@ -10,7 +10,6 @@ class Equation{
     this.b = b;
     this.c = c;
     countDelta();
-    this.x = new double[2];
     solveEquation();
   }
 
@@ -19,6 +18,7 @@ class Equation{
   }
 
   public void solveEquation(){
+    this.x = new double[2];
     if(delta>0){
       x[0] = (-b - Math.sqrt(delta)) / (2*a);
       x[1] = (-b + Math.sqrt(delta)) / (2*a);
@@ -32,40 +32,27 @@ class Equation{
   }
 
   public void printResults(){
-    System.out.println("Equation " + a + "x^2 + " + b + "x +" + c);
-
-    if(delta>0){
-      System.out.println(" has 2 results: x1=" + x[0] + " and x2="+x[1]);
+    System.out.println("\nEntered equation: " + a + " x^2 + " + b + " x +" + c+"\n");
+    System.out.println("Delta = "+delta);
+    System.out.print("Your equation ");
+      
+   /* if(delta>0){
+      System.out.println("has 2 results: x1=" + String.format("%.4f", x[0]) + " and x2=" +String.format("%.4f", x[1]));
     } else if(delta<0){
-      System.out.println(" has no result");
+      System.out.println("has no result");
     } else {
-      System.out.println(" has 1 result x=" + x[0]);
+      System.out.println("has 1 result x=" + String.format("%.4f", x[0]));
+    }
+    */
+      
+      if(delta>0){
+      System.out.println("has 2 results: x1=" + x[0] + " and x2=" +x[1]);
+    } else if(delta<0){
+      System.out.println("has no result");
+    } else {
+      System.out.println("has 1 result x=" + x[0]);
     }
   }
 
-  public static void main(String[] args){
-    if(args.length != 3){
-      System.out.println("Wrong number of arguments. 3 arguments expected.");
-      return;
-    }
-
-
-    double a, b, c;
-      try{
-        a = Double.parseDouble(args[0]);
-        b = Double.parseDouble(args[1]);
-        c = Double.parseDouble(args[2]);
-        if(a==0.0){
-          System.out.println("First argument can't be equal to 0.");
-          return;
-        }
-
-      } catch(NumberFormatException e){
-        System.out.println("Wrong arguments format. Double arguments expected.");
-        return;
-      }
-
-    Equation equation = new Equation(a, b, c);
-    equation.printResults();
-  }
+  
 }
