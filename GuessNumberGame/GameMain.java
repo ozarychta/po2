@@ -22,5 +22,6 @@ class GameMain{
     GuessNumberGame game = new GuessNumberGame(n);
     game.playGame();
 
+
   }
 }
