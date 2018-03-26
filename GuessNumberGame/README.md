@@ -1,1 +1,1 @@
-Game in which you have to guess what randomly generated number.
+Game in which you have to guess randomly generated number.
