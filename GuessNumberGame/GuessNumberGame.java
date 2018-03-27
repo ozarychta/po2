@@ -76,7 +76,7 @@ class GuessNumberGame{
 
     return userGuess;
   }
-
+  
   private boolean checkGuess(int userGuess){
       tries++;
       if(userGuess==randomNumber){

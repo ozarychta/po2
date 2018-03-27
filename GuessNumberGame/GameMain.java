@@ -6,7 +6,7 @@ class GameMain{
 	+args.length+" arguments.");
       System.exit(1);
     }
-
+  
     int n = 0;
     try{
       n = Integer.parseInt(args[0]);
