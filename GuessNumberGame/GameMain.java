@@ -2,7 +2,8 @@ class GameMain{
     public static void main(String[] args){
     if(args.length != 1){
         System.out.println("Wrong number of arguments!");
-        System.out.println("1 integer number greater that 0 was expected. You entered "+args.length+" arguments.");
+        System.out.println("1 integer number greater that 0 was expected. You entered "
+	+args.length+" arguments.");
       System.exit(1);
     }
 

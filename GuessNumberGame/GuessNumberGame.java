@@ -33,18 +33,14 @@ class GuessNumberGame{
     } while(checkIfWantsToPlayAgain());
 
   }
+
   private boolean checkIfWantsToPlayAgain(){
     boolean wantsToPlayAgain=false;
     String answer=" ";
     boolean isValid;
     do{
       System.out.println("\nEnter 'YES' if you want to play the game again or 'NO' if you don't");
-      try{
-        answer = scanner.nextLine();
-      } catch (Exception e){
-        System.out.println(e.getMessage());
-        e.printStackTrace();
-      }
+      answer = scanner.nextLine();
 
       if(answer.equalsIgnoreCase("YES")) {
         wantsToPlayAgain = true;
@@ -69,13 +65,10 @@ class GuessNumberGame{
       System.out.println("\nGuess what number I'm thinking about...:");
       try{
         userGuess = scanner.nextInt();
-      } catch (InputMismatchException e1){
+      } catch (InputMismatchException e){
         System.out.println("\nYou entered something weird...");
         System.out.println("You have to enter an integer number from range [0,"+N+"]");
         isValid = false;
-      } catch (Exception e2){
-        System.out.println(e2.getMessage());
-        e2.printStackTrace();
       } finally {
         scanner.nextLine();
       }
