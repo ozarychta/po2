@@ -1,3 +1,10 @@
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.Map;
@@ -9,8 +16,29 @@ public class BankSystem {
 
     private Scanner s = new Scanner(System.in);
     private HashMap<Integer, Account> accounts = new HashMap<>();
+    private Gson gson = new Gson();
+    private String jsonDataFileName = "accounts.json";
 
     public BankSystem(){
+    }
+
+    private void loadDataFromJson(){
+        try(JsonReader reader = new JsonReader(new FileReader(jsonDataFileName))){
+            Account.setAccountCounter(gson.fromJson(reader, Integer.TYPE));
+            accounts = gson.fromJson(reader, new TypeToken<HashMap<Integer, Account>>() {}.getType());
+        }  catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void storeDataToJson(){
+        try(FileWriter writer = new FileWriter(jsonDataFileName)){
+            String json = gson.toJson(Account.getAccountCounter());
+            json = json + gson.toJson(accounts);
+            writer.write(json);
+        }  catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     private void printMenu(){
@@ -27,6 +55,7 @@ public class BankSystem {
 
     public void start(){
         System.out.println("Welcome in BankSystem application.");
+        loadDataFromJson();
         printMenu();
 
         boolean quit = false;
@@ -61,6 +90,7 @@ public class BankSystem {
                     break;
                 case "Q":
                     if(confirmOperation("Quit BankSystem application")){
+                        storeDataToJson();
                         quit = true;
                     } else{
                         System.out.println("Operation aborted.");
@@ -80,34 +110,49 @@ public class BankSystem {
         System.out.println("\nEnter new user's data:" );
         System.out.println("First name :");
         firstName = getWordFromUser();
-        System.out.println("Last name : ");
+
+        System.out.println("\nLast name : ");
         lastName = getWordsFromUser();
-        System.out.println("PESEL : ");
+
+        System.out.println("\nPESEL : ");
         pesel = getPeselFromUser();
-        System.out.println("\nEnter new user's address:" );
-        System.out.println("City: ");
-        address = getWordFromUser();
-        System.out.println("Street: ");
-        address = address + " St." + getWordsFromUser();
-        System.out.println("House number: ");
-        address = address + " " + getHouseNumberFromUser();
 
-        System.out.println("Opening balance : ");
-        balance = getValidMoneyAmountFromUser();
+        Map<Integer,Account> accountsWithTheSamePesel = accounts.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().getPesel().matches(pesel))
+                .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
 
-        if (confirmOperation("add following account: " +
-                "Account{" +
-                " firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", pesel='" + pesel + '\'' +
-                ", address='" + address + '\'' +
-                ", balance=" + balance +
-                '}')) {
-            Account newAccount = new Account(firstName, lastName, pesel, address, balance);
-            accounts.put(newAccount.getClientID(), newAccount);
+        if(!accountsWithTheSamePesel.isEmpty()){
+            System.out.println("Account with that pesel already exist. Operation aborted.");
         } else {
-            System.out.println("Operation aborted.");
+            System.out.println("\nEnter new user's address:" );
+            System.out.println("City: ");
+            address = getWordFromUser();
+
+            System.out.println("\nStreet: ");
+            address = address + " St." + getWordsFromUser();
+
+            System.out.println("\nHouse number: ");
+            address = address + " " + getHouseNumberFromUser();
+
+            System.out.println("\nOpening balance : ");
+            balance = getValidMoneyAmountFromUser();
+
+            if (confirmOperation("add following account: \n" +
+                    "Account{" +
+                    "\n\tfirstName = '" + firstName + '\'' +
+                    ", \n\tlastName = '" + lastName + '\'' +
+                    ", \n\tpesel = '" + pesel + '\'' +
+                    ", \n\taddress = '" + address + '\'' +
+                    ", \n\tbalance = " + balance +
+                    "$\n\t}\n")) {
+                Account newAccount = new Account(firstName, lastName, pesel, address, balance);
+                accounts.put(newAccount.getClientID(), newAccount);
+            } else {
+                System.out.println("Operation aborted.");
+            }
         }
+
     }
 
     private void removeAccount(){
@@ -115,10 +160,14 @@ public class BankSystem {
             System.out.println("Accounts database is empty. Operation aborted.");
         } else {
             int clientID = getValidClientIDFromUser();
-            if(confirmOperation("delete that account: "+accounts.get(clientID))){
-                accounts.remove(clientID);
-            } else {
-                System.out.println("Operation aborted.");
+            if(!accounts.containsKey(clientID)){
+                System.out.println("There is no account with that UserID. Operation aborted.");
+            } else{
+                if(confirmOperation("delete that account: "+accounts.get(clientID))){
+                        accounts.remove(clientID);
+                } else {
+                    System.out.println("Operation aborted.");
+                }
             }
         }
     }
@@ -128,11 +177,16 @@ public class BankSystem {
             System.out.println("Accounts database is empty. Operation aborted.");
         } else {
             int clientID = getValidClientIDFromUser();
-            double moneyToDeposit = getValidMoneyAmountFromUser();
-            if(confirmOperation("deposit "+moneyToDeposit+"$ on account with ID = "+clientID)){
-                accounts.get(clientID).addToBalance(moneyToDeposit);
-            } else {
-                System.out.println("Operation aborted.");
+            if(!accounts.containsKey(clientID)){
+                System.out.println("There is no account with that UserID. Operation aborted.");
+            } else{
+                System.out.println("Enter amount of money to be deposited.");
+                double moneyToDeposit = getValidMoneyAmountFromUser();
+                if(confirmOperation("deposit "+moneyToDeposit+"$ on account with ID = "+clientID)){
+                        accounts.get(clientID).addToBalance(moneyToDeposit);
+                } else {
+                    System.out.println("Operation aborted.");
+                }
             }
         }
     }
@@ -142,14 +196,19 @@ public class BankSystem {
             System.out.println("Accounts database is empty. Operation aborted.");
         } else {
             int clientID = getValidClientIDFromUser();
-            double moneyToWithdraw = getValidMoneyAmountFromUser();
-            if(confirmOperation("withdraw "+moneyToWithdraw+"$ from account with ID = "+clientID)){
-                boolean withdrawalSucceeded = accounts.get(clientID).withdrawFromBalance(moneyToWithdraw);
-                if(!withdrawalSucceeded){
-                    System.out.println("There is not enough money on this account. \nOperation aborted.");
+            if(!accounts.containsKey(clientID)){
+                System.out.println("There is no account with that UserID. Operation aborted.");
+            } else{
+                System.out.println("Enter amount of money to be withdrawn.");
+                double moneyToWithdraw = getValidMoneyAmountFromUser();
+                if(confirmOperation("withdraw "+moneyToWithdraw+"$ from account with ID = "+clientID)){
+                        boolean withdrawalSucceeded = accounts.get(clientID).withdrawFromBalance(moneyToWithdraw);
+                        if(!withdrawalSucceeded){
+                            System.out.println("There is not enough money on this account. \nOperation aborted.");
+                        }
+                } else {
+                    System.out.println("Operation aborted.");
                 }
-            } else {
-                System.out.println("Operation aborted.");
             }
         }
     }
@@ -160,26 +219,32 @@ public class BankSystem {
         } else {
             System.out.println("Choose account FROM which money will be transferred.");
             int sourceClientID = getValidClientIDFromUser();
-            System.out.println("Choose account TO which money will be transferred.");
-            int destinationClientID = getValidClientIDFromUser();
-            System.out.println("Enter amount of money to be transferred.");
-            double moneyToTransfer = getValidMoneyAmountFromUser();
-
-            if(confirmOperation("transfer "+moneyToTransfer+
-                    "$ from account with ID = "+sourceClientID +
-                    "to account with ID = "+destinationClientID)){
-                boolean withdrawalSucceeded = accounts.get(sourceClientID).withdrawFromBalance(moneyToTransfer);
-                if(withdrawalSucceeded){
-                    accounts.get(destinationClientID).addToBalance(moneyToTransfer);
+            if(!accounts.containsKey(sourceClientID)){
+                System.out.println("There is no account with that UserID. Operation aborted.");
+            } else{
+                System.out.println("Choose account TO which money will be transferred.");
+                int destinationClientID = getValidClientIDFromUser();
+                if(!accounts.containsKey(destinationClientID)){
+                    System.out.println("There is no account with that UserID. Operation aborted.");
                 } else{
-                    System.out.println("There is not enough money on this account. \nOperation aborted.");
-                }
+                    System.out.println("Enter amount of money to be transferred.");
+                    double moneyToTransfer = getValidMoneyAmountFromUser();
 
-            } else {
-                System.out.println("Operation aborted.");
+                    if(confirmOperation("transfer "+moneyToTransfer+
+                            "$ from account with ID = "+sourceClientID +
+                            " to account with ID = "+destinationClientID)){
+                        boolean withdrawalSucceeded = accounts.get(sourceClientID).withdrawFromBalance(moneyToTransfer);
+                        if(withdrawalSucceeded){
+                            accounts.get(destinationClientID).addToBalance(moneyToTransfer);
+                        } else{
+                            System.out.println("There is not enough money on account with ID = "+sourceClientID+". \nOperation aborted.");
+                        }
+                    } else {
+                        System.out.println("Operation aborted.");
+                    }
+                }
             }
         }
-
     }
 
     private void printAll(){
@@ -204,32 +269,32 @@ public class BankSystem {
             case "F":
                 System.out.println("Enter first name to search for.");
                 criterionValue = getWordFromUser();
-                predicate = entry -> entry.getValue().getFirstName().matches(criterionValue);
+                predicate = entry -> entry.getValue().getFirstName().toLowerCase().contains(criterionValue.toLowerCase());
                 break;
             case "L":
                 System.out.println("Enter last name to search for.");
                 criterionValue = getWordsFromUser();
-                predicate = entry -> entry.getValue().getLastName().matches(criterionValue);
+                predicate = entry -> entry.getValue().getLastName().toLowerCase().contains(criterionValue.toLowerCase());
                 break;
             case "P":
                 System.out.println("Enter pesel to search for.");
                 criterionValue = getPeselFromUser();
-                predicate = entry -> entry.getValue().getPesel().matches(criterionValue);
+                predicate = entry -> entry.getValue().getPesel().toLowerCase().contains(criterionValue.toLowerCase());
                 break;
             case "C":
                 System.out.println("Enter city to search for.");
                 criterionValue = getWordFromUser();
-                predicate = entry -> entry.getValue().getAddress().matches(criterionValue);
+                predicate = entry -> entry.getValue().getAddress().toLowerCase().contains(criterionValue.toLowerCase());
                 break;
             case "S":
                 System.out.println("Enter street to search for.");
                 criterionValue = getWordsFromUser();
-                predicate = entry -> entry.getValue().getAddress().matches(criterionValue);
+                predicate = entry -> entry.getValue().getAddress().toLowerCase().contains(criterionValue.toLowerCase());
                 break;
             case "N":
                 System.out.println("Enter house number to search for.");
                 criterionValue = getHouseNumberFromUser();
-                predicate = entry -> entry.getValue().getAddress().matches(criterionValue);
+                predicate = entry -> entry.getValue().getAddress().toLowerCase().contains(criterionValue.toLowerCase());
                 break;
             case "A":
                 String temp;
@@ -240,7 +305,7 @@ public class BankSystem {
                 temp = temp + " St." + getWordsFromUser();
                 System.out.println("House number: ");
                 criterionValue = temp + " " + getHouseNumberFromUser();
-                predicate = entry -> entry.getValue().getAddress().matches(criterionValue);
+                predicate = entry -> entry.getValue().getAddress().toLowerCase().contains(criterionValue.toLowerCase());
                 break;
             case "B":
                 System.out.println("Enter bilance to search for.");
@@ -263,16 +328,16 @@ public class BankSystem {
         } else{
             Map<Integer, Account> foundAccounts = findAccountsByCriterion();
 
-            if(!foundAccounts.isEmpty()){
-                if(confirmOperation("print accounts that meet the criterium")){
+            if(confirmOperation("print accounts that meet the criterium")){
+                if(foundAccounts.isEmpty()){
+                    System.out.println("There is no account that meets the criterion.");
+                } else {
                     for(Map.Entry<Integer, Account> entry: foundAccounts.entrySet()){
                         System.out.println(entry.getValue());
                     }
-                } else{
-                    System.out.println("Operation aborted.");
                 }
-            } else {
-                System.out.println("There is no account that meets the criterion.");
+            } else{
+                System.out.println("Operation aborted.");
             }
         }
     }
@@ -280,7 +345,7 @@ public class BankSystem {
     private boolean confirmOperation(String operationDescription){
         String answer;
         boolean confirmed = false;
-        System.out.println("Are you sure you want to " + operationDescription + "?");
+        System.out.println("\nAre you sure you want to " + operationDescription + "?");
         do {
             System.out.println("Enter 'YES' or 'NO' :");
             answer = s.nextLine();
@@ -299,12 +364,12 @@ public class BankSystem {
 
         do{
             isValid = true;
-            System.out.println("\nEnter clientID:");
+            System.out.println("Enter clientID (integer value):");
             try{
                 clientID = s.nextInt();
-                if(!accounts.containsKey(clientID)){
-                    System.out.println("There is no account with that UserID");
-                    isValid = false;
+                if(clientID<0){
+                    System.out.println("ID must be a positive value");
+                    isValid=false;
                 }
             } catch (InputMismatchException e){
                 System.out.println("\nInvalid value type. ID must be an integer value.");
@@ -323,25 +388,29 @@ public class BankSystem {
 
         do{
             isValid = true;
-            System.out.println("\nEnter amount of money:");
+            System.out.println("Please enter valid data... (positive dauble value with comma as a decimal point) : ");
             try{
                 amount = s.nextDouble();
+                if(amount<=0.0){
+                    System.out.println("Amount of money must be a positive value");
+                    isValid=false;
+                }
             } catch (InputMismatchException e){
-                System.out.println("\nInvalid value type. Amount of money must be a double value.");
+                System.out.println("Invalid value type.");
                 isValid = false;
             } finally {
                 s.nextLine();
             }
         } while(!isValid);
 
-        amount = Math.round(amount*100) / 100; //rounds to 2 decimal places
+        amount = Math.round(amount*100.0) / 100.0; //rounds to 2 decimal places
         return Math.abs(amount);
     }
 
     private String getWordFromUser(){
         String word;
         do{
-            System.out.println("Please enter valid data... (only letters expected) : ");
+            System.out.println("Please enter valid data... (only english letters expected) : ");
             word = s.nextLine().trim();
         }while(!(word.matches("^[a-zA-Z]{2,}$")));
         return word;
@@ -350,7 +419,7 @@ public class BankSystem {
     private String getWordsFromUser(){
         String word;
         do{
-            System.out.println("Please enter valid data... (only letters, space and '-' between words expected) : ");
+            System.out.println("Please enter valid data... (only english letters, space and '-' between words expected) : ");
             word = s.nextLine().trim();
         }while(!(word.matches("^[a-zA-Z]{2,}([-\\s][a-zA-Z]{2,})*$")));
         return word;

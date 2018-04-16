@@ -1,5 +1,5 @@
 public class Account {
-    public static int accountCounter = 0;
+    private static int accountCounter = 1;
 
     private int clientID;
     private String firstName;
@@ -15,6 +15,14 @@ public class Account {
         this.address = address;
         this.balance = balance;
         this.clientID = accountCounter++;
+    }
+
+    public static void setAccountCounter(int value){
+        accountCounter = value;
+    }
+
+    public static int getAccountCounter() {
+        return accountCounter;
     }
 
     public int getClientID() {
@@ -55,13 +63,13 @@ public class Account {
     @Override
     public String toString() {
         return "Account{" +
-                " clientID =" + clientID +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", pesel='" + pesel + '\'' +
-                ", address='" + address + '\'' +
-                ", balance=" + balance +
-                '}';
+                " \n\tclientID = " + clientID +
+                ", \n\tfirstName = '" + firstName + '\'' +
+                ", \n\tlastName = '" + lastName + '\'' +
+                ", \n\tpesel = '" + pesel + '\'' +
+                ", \n\taddress = '" + address + '\'' +
+                ", \n\tbalance = " + balance +
+                "$\n\t}\n";
     }
 
     @Override
