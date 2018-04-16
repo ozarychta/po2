@@ -14,8 +14,8 @@ To do:
     
 How to run Bank System:
 
-  Open terminal in BankSystem folder
-  javac -cp *;. *.java
-  java -cp *;. BankSystemMain
+    Open terminal in BankSystem folder
+    javac -cp *;. *.java
+    java -cp *;. BankSystemMain
   
-  (":" instead of ";" on Linux)
+    (":" instead of ";" on Linux)
