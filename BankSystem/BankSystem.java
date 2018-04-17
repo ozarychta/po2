@@ -18,13 +18,15 @@ public class BankSystem {
     private HashMap<Integer, Account> accounts = new HashMap<>();
     private Gson gson = new Gson();
     private String jsonDataFileName = "accounts.json";
+    private int accountCounter = 0;
 
     public BankSystem(){
+      loadDataFromJson();
     }
 
     private void loadDataFromJson(){
         try(JsonReader reader = new JsonReader(new FileReader(jsonDataFileName))){
-            Account.setAccountCounter(gson.fromJson(reader, Integer.TYPE));
+            accountCounter = gson.fromJson(reader, Integer.TYPE);
             accounts = gson.fromJson(reader, new TypeToken<HashMap<Integer, Account>>() {}.getType());
         }  catch(IOException e){
             e.printStackTrace();
@@ -33,7 +35,7 @@ public class BankSystem {
 
     private void storeDataToJson(){
         try(FileWriter writer = new FileWriter(jsonDataFileName)){
-            String json = gson.toJson(Account.getAccountCounter());
+            String json = gson.toJson(accountCounter);
             json = json + gson.toJson(accounts);
             writer.write(json);
         }  catch(IOException e){
@@ -55,7 +57,6 @@ public class BankSystem {
 
     public void start(){
         System.out.println("Welcome in BankSystem application.");
-        loadDataFromJson();
         printMenu();
 
         boolean quit = false;
@@ -90,7 +91,6 @@ public class BankSystem {
                     break;
                 case "Q":
                     if(confirmOperation("Quit BankSystem application")){
-                        storeDataToJson();
                         quit = true;
                     } else{
                         System.out.println("Operation aborted.");
@@ -146,8 +146,10 @@ public class BankSystem {
                     ", \n\taddress = '" + address + '\'' +
                     ", \n\tbalance = " + balance +
                     "$\n\t}\n")) {
-                Account newAccount = new Account(firstName, lastName, pesel, address, balance);
+                Account newAccount = new Account(accountCounter, firstName, lastName, pesel, address, balance);
                 accounts.put(newAccount.getClientID(), newAccount);
+                accountCounter++;
+                storeDataToJson();
             } else {
                 System.out.println("Operation aborted.");
             }
@@ -165,6 +167,7 @@ public class BankSystem {
             } else{
                 if(confirmOperation("delete that account: "+accounts.get(clientID))){
                         accounts.remove(clientID);
+                        storeDataToJson();
                 } else {
                     System.out.println("Operation aborted.");
                 }
@@ -184,6 +187,7 @@ public class BankSystem {
                 double moneyToDeposit = getValidMoneyAmountFromUser();
                 if(confirmOperation("deposit "+moneyToDeposit+"$ on account with ID = "+clientID)){
                         accounts.get(clientID).addToBalance(moneyToDeposit);
+                        storeDataToJson();
                 } else {
                     System.out.println("Operation aborted.");
                 }
@@ -205,7 +209,7 @@ public class BankSystem {
                         boolean withdrawalSucceeded = accounts.get(clientID).withdrawFromBalance(moneyToWithdraw);
                         if(!withdrawalSucceeded){
                             System.out.println("There is not enough money on this account. \nOperation aborted.");
-                        }
+                        } else storeDataToJson();
                 } else {
                     System.out.println("Operation aborted.");
                 }
@@ -236,6 +240,7 @@ public class BankSystem {
                         boolean withdrawalSucceeded = accounts.get(sourceClientID).withdrawFromBalance(moneyToTransfer);
                         if(withdrawalSucceeded){
                             accounts.get(destinationClientID).addToBalance(moneyToTransfer);
+                            storeDataToJson();
                         } else{
                             System.out.println("There is not enough money on account with ID = "+sourceClientID+". \nOperation aborted.");
                         }
@@ -410,7 +415,7 @@ public class BankSystem {
     private String getWordFromUser(){
         String word;
         do{
-            System.out.println("Please enter valid data... (only english letters expected) : ");
+            System.out.println("Please enter valid data... (only english letters (min length 2) expected) : ");
             word = s.nextLine().trim();
         }while(!(word.matches("^[a-zA-Z]{2,}$")));
         return word;
@@ -419,7 +424,7 @@ public class BankSystem {
     private String getWordsFromUser(){
         String word;
         do{
-            System.out.println("Please enter valid data... (only english letters, space and '-' between words expected) : ");
+            System.out.println("Please enter valid data... (only english letters (min length 2), space and '-' between words expected) : ");
             word = s.nextLine().trim();
         }while(!(word.matches("^[a-zA-Z]{2,}([-\\s][a-zA-Z]{2,})*$")));
         return word;
@@ -458,10 +463,10 @@ public class BankSystem {
         do {
             System.out.println("\nChoose criterion :");
             criterion = s.nextLine().toUpperCase().trim();
-            if(!criterion.matches("^[FLPCSHAB]$")){
+            if(!criterion.matches("^[FLPCSNAB]$")){
                 System.out.println("Invalid criterion.");
             }
-        } while (!criterion.matches("^[FLPCSHAB]$"));
+        } while (!criterion.matches("^[FLPCSNAB]$"));
 
         return criterion;
     }

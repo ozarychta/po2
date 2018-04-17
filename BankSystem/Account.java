@@ -1,5 +1,4 @@
 public class Account {
-    private static int accountCounter = 1;
 
     private int clientID;
     private String firstName;
@@ -8,22 +7,15 @@ public class Account {
     private String address;
     private double balance;
 
-    public Account(String firstName, String lastName, String pesel, String address, double balance) {
+    public Account(int clientID, String firstName, String lastName, String pesel, String address, double balance) {
+        this.clientID = clientID;
         this.firstName = firstName;
         this.lastName = lastName;
         this.pesel = pesel;
         this.address = address;
         this.balance = balance;
-        this.clientID = accountCounter++;
     }
 
-    public static void setAccountCounter(int value){
-        accountCounter = value;
-    }
-
-    public static int getAccountCounter() {
-        return accountCounter;
-    }
 
     public int getClientID() {
         return clientID;
@@ -56,6 +48,7 @@ public class Account {
     public boolean withdrawFromBalance(double moneyToWithdraw){
         if(balance >= moneyToWithdraw){
             balance -= moneyToWithdraw;
+            balance = Math.round(balance*100.0) / 100.0;
             return true;
         } else return false;
     }
@@ -68,7 +61,7 @@ public class Account {
                 ", \n\tlastName = '" + lastName + '\'' +
                 ", \n\tpesel = '" + pesel + '\'' +
                 ", \n\taddress = '" + address + '\'' +
-                ", \n\tbalance = " + balance +
+                ", \n\tbalance = " + balance  +
                 "$\n\t}\n";
     }
 
