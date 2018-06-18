@@ -12,15 +12,6 @@ public class Account {
     private SimpleStringProperty address;
     private SimpleDoubleProperty balance;
 
-//    public Account(int clientID, String firstName, String lastName, String pesel, String address, double balance) {
-//        this.clientID.set(clientID);
-//        this.firstName.set(firstName);
-//        this.lastName.set(lastName);
-//        this.pesel.set(pesel);
-//        this.address.set(address);
-//        this.balance.set(balance);
-//    }
-
     public Account() {
         this.clientID = new SimpleIntegerProperty();
         this.firstName = new SimpleStringProperty();
@@ -28,6 +19,15 @@ public class Account {
         this.pesel = new SimpleStringProperty();
         this.address = new SimpleStringProperty();
         this.balance = new SimpleDoubleProperty();
+    }
+
+    public Account(int clientID, String firstName, String lastName, String pesel, String address, double balance) {
+        this.clientID.set(clientID);
+        this.firstName.set(firstName);
+        this.lastName.set(lastName);
+        this.pesel.set(pesel);
+        this.address.set(address);
+        this.balance.set(balance);
     }
 
     public int getClientID() {
