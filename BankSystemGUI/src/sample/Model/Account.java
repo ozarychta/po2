@@ -78,16 +78,57 @@ public class Account {
         this.balance.set(balance);
     }
 
-    public void addToBalance(double moneyToAdd){
-        balance.set(balance.get()+moneyToAdd);
+    public static boolean checkIfIsWord(String word) {
+        if (word.matches("^[a-zA-Z -]*$")) return true;
+        else return false;
     }
 
-    public boolean withdrawFromBalance(double moneyToWithdraw){
-        if(balance.get() >= moneyToWithdraw){
-            balance.set(balance.get()-moneyToWithdraw);
-            balance.set(Math.round(balance.get()*100.0) / 100.0);
-            return true;
-        } else return false;
+    public static boolean checkIfIsPesel(String word) {
+        if (word.matches("^[0-9]{11}$")) return true;
+        else return false;
+    }
+
+    public static boolean checkIfIsAddress(String word) {
+        if (word.matches("^[a-zA-Z -]*$") || word.matches("^[a-zA-Z -]* [0-9]+[a-zA-Z]$")) return true;
+        else return false;
+    }
+
+    public static double stringToDouble(String word) {
+        double result;
+        try {
+            result = Double.parseDouble(word);
+            result = Math.round(result * 100.0) / 100.0;
+            return result;
+        } catch (NumberFormatException e) {
+            result = -1.0;
+            return result;
+        }
+    }
+
+    public static boolean checkIfIsPositiveEqualDouble(double value) {
+        if (value >= 0.0) return true;
+        else return false;
+    }
+
+    public static boolean checkIfIsPositiveDouble(double value) {
+        if (value > 0.0) return true;
+        else return false;
+    }
+
+    public static int stringToInt(String word) {
+        int result;
+        try {
+            result = Integer.parseInt(word);
+            return result;
+        } catch (NumberFormatException e) {
+            result = -1;
+            return result;
+        }
+    }
+
+    public static boolean checkIfIsPositiveInt(int value) {
+        if (value > 0) return true;
+        else return false;
     }
 
     @Override

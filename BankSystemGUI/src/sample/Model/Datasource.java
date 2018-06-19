@@ -45,6 +45,19 @@ public class Datasource {
     public static final String QUERY_BY_BALANCE =
             "SELECT * FROM " + TABLE_ACCOUNTS + " WHERE " + COLUMN_BALANCE + " LIKE ?";
 
+    public static final String INSERT_ACCOUNT = "INSERT INTO " + TABLE_ACCOUNTS +
+            '(' + COLUMN_FIRST_NAME + ", " +COLUMN_LAST_NAME + ", " +COLUMN_PESEL + ", " +COLUMN_ADDRESS + ", " +COLUMN_BALANCE
+            + ") VALUES(?, ?, ?, ?, ?)";
+
+    public static final String GET_BALANCE_BY_ID =
+            "SELECT "+COLUMN_BALANCE+" FROM " + TABLE_ACCOUNTS + " WHERE " + COLUMN_USER_ID + " = ?";
+
+    public static final String UPDATE_BALANCE_BY_ID =
+            "UPDATE "+TABLE_ACCOUNTS+" SET " + COLUMN_BALANCE+ " = ? WHERE " + COLUMN_USER_ID + " = ?";
+
+    public static final String DELETE_BY_ID =
+            "DELETE FROM "+TABLE_ACCOUNTS+" WHERE " + COLUMN_USER_ID + " = ?";
+
 
         private PreparedStatement queryByUserID;
         private PreparedStatement queryByFirstName;
@@ -52,6 +65,10 @@ public class Datasource {
         private PreparedStatement queryByPesel;
         private PreparedStatement queryByAddress;
         private PreparedStatement queryByBalance;
+        private PreparedStatement insertAccount;
+        private PreparedStatement getBalanceByID;
+        private PreparedStatement updateBalanceByID;
+        private PreparedStatement deleteByID;
 
     private Connection conn;
     private static Datasource instance = new Datasource();
@@ -73,6 +90,10 @@ public class Datasource {
             queryByAddress = conn.prepareStatement(QUERY_BY_ADDRESS);
             queryByPesel = conn.prepareStatement(QUERY_BY_PESEL);
             queryByBalance = conn.prepareStatement(QUERY_BY_BALANCE);
+            insertAccount = conn.prepareStatement(INSERT_ACCOUNT);
+            getBalanceByID = conn.prepareStatement(GET_BALANCE_BY_ID);
+            updateBalanceByID = conn.prepareStatement(UPDATE_BALANCE_BY_ID);
+            deleteByID = conn.prepareStatement(DELETE_BY_ID);
 
             return true;
         } catch (SQLException e) {
@@ -87,7 +108,6 @@ public class Datasource {
             if(queryByUserID != null){
                 queryByUserID.close();
             }
-
             if(queryByFirstName != null){
                 queryByFirstName.close();
             }
@@ -102,6 +122,18 @@ public class Datasource {
             }
             if(queryByBalance != null){
                 queryByBalance.close();
+            }
+            if(insertAccount != null){
+                insertAccount.close();
+            }
+            if(getBalanceByID != null){
+                getBalanceByID.close();
+            }
+            if(updateBalanceByID != null){
+                updateBalanceByID.close();
+            }
+            if(deleteByID != null){
+                deleteByID.close();
             }
 
             if (conn != null) {
@@ -155,6 +187,8 @@ public class Datasource {
         }
     }
 
+
+
     private List<Account> findBy(PreparedStatement ps, String value) {
 
         try {
@@ -176,13 +210,6 @@ public class Datasource {
     }
 
     public List<Account> findByClientID(String value) {
-//        int i=0;
-//        try{
-//            i = Integer.parseInt(value);
-//        } catch(NumberFormatException e){
-//            System.out.println("NumberFormatException: " + e.getMessage());
-//            return null;
-//        }
         return findBy(queryByUserID, value);
     }
 
@@ -211,8 +238,132 @@ public class Datasource {
         return findBy(queryByBalance, value);
     }
 
+    public int insertAccount(String firstName, String lastName, String pesel, String address, double balance) {
 
+        try{
+            insertAccount.setString(1, firstName);
+            insertAccount.setString(2, lastName);
+            insertAccount.setString(3, pesel);
+            insertAccount.setString(4, address);
+            insertAccount.setDouble(5, balance);
+            int affectedRows = insertAccount.executeUpdate();
 
+            return affectedRows;
+        }catch(Exception e){
+            System.out.println("Insert failed");
+            return -1;
+        }
 
+    }
+
+    public int delete(int id){
+        try{
+            deleteByID.setInt(1,id);
+            int affectedRows = deleteByID.executeUpdate();
+            return affectedRows;
+        }catch (Exception e) {
+            System.out.println("Deleting query failed: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    private double getBalanceByID(int id){
+        try{
+            getBalanceByID.setInt(1,id);
+            ResultSet result = getBalanceByID.executeQuery();
+            double balance = result.getDouble(1);
+            return balance;
+        }catch(Exception e){
+            System.out.println("That ID is not in the database");
+            return -1;
+        }
+    }
+
+    private boolean updateBalanceByID(int id, double amount){
+        try{
+            updateBalanceByID.setDouble(1,amount);
+            updateBalanceByID.setInt(2,id);
+            ResultSet result = getBalanceByID.executeQuery();
+            int affectedRecords = updateBalanceByID.executeUpdate();
+
+            return affectedRecords == 1;
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            System.out.println("That ID is not in the database");
+            return false;
+        }
+    }
+
+    public int withdraw(int id, double amount){
+        double balance = getBalanceByID(id);
+        if(balance<0) return -1;
+        else{
+            double newBalance = balance-amount;
+            if(newBalance<0) return -2;
+            else{
+                if(updateBalanceByID(id, newBalance)){
+                    return 1;
+                } else return 0;
+            }
+        }
+    }
+
+    public int deposit(int id, double amount){
+        double balance = getBalanceByID(id);
+        if(balance<0) return -1;
+        else{
+            double newBalance = balance+amount;
+            if(updateBalanceByID(id, newBalance)){
+                return 1;
+            } else return 0;
+        }
+    }
+
+    public int transaction(int idFrom, int idTo, double amount) {
+
+        int somethingWrong=0;
+        try {
+            conn.setAutoCommit(false);
+            if(getBalanceByID(idTo)==-1){
+                somethingWrong=-3;
+                throw new SQLException("Id to deposit not in database");
+            }
+
+            int withdrawalResult = withdraw(idFrom, amount);
+            int depositResult = deposit(idTo, amount);
+            if(withdrawalResult==1) {
+                if(depositResult ==1){
+                    conn.commit();
+                    somethingWrong = 1;
+                } else if(depositResult==-1){
+                    somethingWrong=-3;
+                } else{
+                    somethingWrong = depositResult;
+                    throw new SQLException("The deposit failed");
+                }
+            } else {
+                somethingWrong = withdrawalResult;
+                throw new SQLException("The withdrawal failed");
+            }
+
+        } catch(Exception e) {
+            System.out.println("Insert song exception: " + e.getMessage());
+            try {
+                System.out.println("Performing rollback");
+                conn.rollback();
+            } catch(SQLException e2) {
+                System.out.println("Oh no! Things are really bad! " + e2.getMessage());
+            }
+        } finally {
+            try {
+                conn.setAutoCommit(true);
+                return somethingWrong;
+            } catch(SQLException e) {
+                System.out.println("Couldn't reset auto-commit! " + e.getMessage());
+                return somethingWrong;
+            }
+
+        }
+    }
 
 }

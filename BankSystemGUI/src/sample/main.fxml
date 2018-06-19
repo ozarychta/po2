@@ -88,8 +88,8 @@
         </items>
     </ChoiceBox>
     <Button fx:id="searchButton" onAction="#onSearchButtonClick" disable="true" mnemonicParsing="false" text="Search" GridPane.columnIndex="4" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
-    <Button mnemonicParsing="false" text="Withdraw" GridPane.columnIndex="5" GridPane.rowIndex="2" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
-    <Button mnemonicParsing="false" text="Deposit" GridPane.columnIndex="5" GridPane.rowIndex="3" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
-    <Button mnemonicParsing="false" text="Transaction" GridPane.columnIndex="5" GridPane.rowIndex="4" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+    <Button fx:id="withdrawButton" mnemonicParsing="false" text="Withdraw" GridPane.columnIndex="5" GridPane.rowIndex="2" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+    <Button fx:id="depositButton" mnemonicParsing="false" text="Deposit" GridPane.columnIndex="5" GridPane.rowIndex="3" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+    <Button fx:id="transactionButton" mnemonicParsing="false" text="Transaction" GridPane.columnIndex="5" GridPane.rowIndex="4" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
 </children>
 </GridPane>

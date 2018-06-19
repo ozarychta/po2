@@ -1,11 +1,13 @@
 package sample;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,6 +18,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import sample.Model.Account;
 import sample.Model.Datasource;
 
@@ -39,11 +42,18 @@ public class Controller {
     @FXML
     private Button searchButton;
 
-//    @FXML
-//    private GridPane mainGridPane;
-
     @FXML
     private Button newAccountButton;
+
+    @FXML
+    private Button withdrawButton;
+
+    @FXML
+    private Button depositButton;
+
+    @FXML
+    private Button transactionButton;
+
 
 
     public void initialize() {
@@ -65,19 +75,100 @@ public class Controller {
             }
         });
 
+        tableView.setRowFactory(
+                new Callback<TableView<Account>, TableRow<Account>>() {
+                    @Override
+                    public TableRow<Account> call(TableView<Account> tableView) {
+                        final TableRow<Account> row = new TableRow<>();
+                        final ContextMenu rowMenu = new ContextMenu();
+                        MenuItem removeItem = new MenuItem("Delete");
+                        removeItem.setOnAction(new EventHandler<ActionEvent>() {
+
+                            @Override
+                            public void handle(ActionEvent event) {
+                                Account account = tableView.getSelectionModel().getSelectedItem();
+                                int id = account.getClientID();
+                                if(Controller.showConfirmation("Deleting client with ID = "+id)){
+                                    if(Datasource.getInstance().delete(id)<0) Controller.showAlert("Couldn't delete account");
+                                    tableView.getItems().remove(row.getItem());
+                                }
+
+                            }
+                        });
+                        rowMenu.getItems().addAll(removeItem);
+
+                        // only display context menu for non-null items:
+                        row.contextMenuProperty().bind(
+                                Bindings.when(Bindings.isNotNull(row.itemProperty()))
+                                        .then(rowMenu)
+                                        .otherwise((ContextMenu)null));
+                        return row;
+                    }
+                });
+
         newAccountButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                switchScene(event);
+                switchScene(event, "addAccountDialog.fxml");
+            }
+        });
+
+        withdrawButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                switchScene(event, "withdrawDialog.fxml");
+            }
+        });
+
+        depositButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                switchScene(event, "depositDialog.fxml");
+            }
+        });
+
+        transactionButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                switchScene(event, "transactionDialog.fxml");
             }
         });
 
     }
 
-    public void switchScene(MouseEvent e){
+    @FXML
+    public static void showAlert(String alertText){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(alertText);
+//        alert.setContentText("Are you sure you want to add that account?");
+
+        Optional<ButtonType> alertResult = alert.showAndWait();
+        if (alertResult.get() == ButtonType.OK){
+            //
+        } else {
+            //
+        }
+    }
+
+    public static boolean showConfirmation(String confirmationText){
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmation");
+        alert.setHeaderText(confirmationText);
+        alert.setContentText("Are you sure you want to proceed?");
+
+        Optional<ButtonType> alertResult = alert.showAndWait();
+        if (alertResult.get() == ButtonType.OK){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void switchScene(MouseEvent e, String fxml){
         try{
             FXMLLoader loader;
-            loader = new FXMLLoader(getClass().getResource("addAccountDialog.fxml"));
+            loader = new FXMLLoader(getClass().getResource(fxml));
             Parent home_page_parent =loader.load();
 
             Scene home_page_scene = new Scene(home_page_parent);
